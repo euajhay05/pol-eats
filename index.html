@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Pol Eats">
+<meta name="theme-color" content="#fbf8f4">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Pol Eats</title>
+<style>
+:root{--bg:#fbf8f4;--card:#fff;--text:#1c1b1a;--mute:#8b857d;--line:#ece6de;--accent:#e8664a;--accent2:#f0a15a;--green:#4fa07a;--soft:#fff3ec;--strava:#fc4c02}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+#app{max-width:480px;margin:0 auto;min-height:100vh;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+.view{display:none;padding:calc(14px + env(safe-area-inset-top)) 18px 20px}.view.on{display:block}
+h1{font-size:28px;margin:4px 0 2px;letter-spacing:-.5px}.sub{color:var(--mute);font-size:13px;margin-bottom:14px}
+.card{background:var(--card);border-radius:20px;padding:16px;box-shadow:0 2px 10px #0000000a}
+.ringbox{display:flex;align-items:center;gap:18px}
+.ringstats{font-size:13px;line-height:1.95}.ringstats b{font-size:15px}.ringstats span{color:var(--mute)}.ringstats span.tag{color:#fff}
+.tag{font-size:10px;background:var(--strava);color:#fff;padding:2px 6px;border-radius:6px;font-weight:700;margin-left:4px}
+.macros{display:flex;gap:10px;margin:12px 0}
+.mac{flex:1;background:var(--card);border-radius:16px;padding:12px;box-shadow:0 2px 10px #0000000a}
+.mac small{color:var(--mute);font-size:11px;font-weight:700;letter-spacing:.4px}.mac b{display:block;font-size:17px;margin:3px 0 6px}.mac b em{font-style:normal;color:var(--mute);font-size:12px;font-weight:500}
+.bar{height:6px;border-radius:3px;background:#f0ebe4;overflow:hidden}.bar i{display:block;height:100%;border-radius:3px}
+.sec{display:flex;justify-content:space-between;align-items:center;margin:16px 0 8px;font-weight:700}
+.link{color:var(--accent);font-weight:700;background:none;border:0;padding:4px 0;cursor:pointer}
+.item{display:flex;gap:12px;align-items:center;background:var(--card);border-radius:16px;padding:10px;margin-bottom:8px;box-shadow:0 2px 10px #0000000a;cursor:pointer}
+.thumb{width:46px;height:46px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;font-size:22px}
+.item .t{flex:1;min-width:0}.item .t b{font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.item .t small{color:var(--mute);font-size:12px}
+.item .k{font-weight:700;font-size:14px}.item .k.neg{color:var(--green)}
+.empty{color:var(--mute);text-align:center;padding:22px 10px;font-size:14px}
+.nudge{background:var(--soft);border:1px solid #f6d3c4;border-radius:16px;padding:12px 14px;font-size:13px;margin-top:6px}.nudge b{color:#c4492f}
+.daynav{display:flex;gap:8px;align-items:center}.daynav button{background:var(--card);border:0;border-radius:10px;width:34px;height:34px;box-shadow:0 1px 4px #0001;cursor:pointer}
+/* coach */
+#chat{padding-bottom:90px}
+.msg{max-width:84%;padding:10px 13px;border-radius:18px;font-size:14px;margin-bottom:8px;white-space:pre-wrap;word-wrap:break-word}
+.me{background:var(--accent);color:#fff;margin-left:auto;border-bottom-right-radius:6px}
+.ai{background:var(--card);box-shadow:0 2px 10px #0000000a;border-bottom-left-radius:6px}
+.msgimg{display:block;max-width:200px;border-radius:16px;margin:0 0 6px auto}
+.logged{background:var(--card);border-radius:16px;padding:10px 12px;box-shadow:0 2px 10px #0000000a;font-size:13px;margin-bottom:8px;max-width:86%}
+.logged .row{display:flex;justify-content:space-between;padding:3px 0}
+.chip{display:inline-block;background:var(--soft);color:#c4492f;font-weight:700;font-size:12px;padding:5px 10px;border-radius:999px;margin-top:6px}
+.typing{color:var(--mute);font-size:13px;padding:4px 2px}
+.composer{position:fixed;left:50%;transform:translateX(-50%);width:min(452px,calc(100% - 28px));bottom:calc(92px + env(safe-area-inset-bottom));background:var(--card);border-radius:26px;padding:8px;display:none;gap:8px;align-items:center;box-shadow:0 4px 20px #0000001f}
+.composer.on{display:flex}
+.composer input[type=text]{flex:1;border:0;outline:0;background:none;padding:8px 4px;font-size:16px}
+.ic{width:38px;height:38px;border-radius:50%;background:#f3eee8;border:0;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;flex:none}
+.ic.go{background:var(--accent);color:#fff}
+.preview{position:relative}.preview img{width:38px;height:38px;border-radius:10px;object-fit:cover;display:block}.preview b{position:absolute;top:-6px;right:-6px;background:#000;color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+/* progress */
+.seg{display:flex;background:#f0ebe4;border-radius:12px;padding:3px;margin-bottom:12px}.seg button{flex:1;border:0;background:none;font-size:13px;font-weight:700;padding:8px;border-radius:9px;color:var(--mute);cursor:pointer}.seg .on{background:#fff;color:var(--text);box-shadow:0 1px 3px #0001}
+.big{font-size:26px;font-weight:800;margin:2px 0 8px}.big span{font-size:13px;color:var(--mute);font-weight:600}
+.lbl{color:var(--mute);font-size:11px;font-weight:700;letter-spacing:.4px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.stats .card{padding:12px}.stats b{display:block;font-size:19px;margin-top:4px}
+.ins{background:#1f2a24;color:#e9efe9;border-radius:18px;padding:14px;font-size:13px;margin-top:10px}.ins b{color:#ffcf8a}
+.btn{width:100%;border:0;border-radius:14px;padding:13px;font-weight:700;background:var(--accent);color:#fff;cursor:pointer}
+.btn.ghost{background:var(--card);color:var(--text);box-shadow:0 1px 4px #0001}
+/* forms / sheet */
+label{display:block;font-size:12px;font-weight:700;color:var(--mute);margin:12px 0 6px;letter-spacing:.3px}
+.field{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px 12px;font-size:16px;outline:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sheetbg{position:fixed;inset:0;background:#0006;display:none;z-index:20}.sheetbg.on{display:block}
+.sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(480px,100%);background:var(--bg);border-radius:24px 24px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));z-index:21;display:none;max-height:88vh;overflow:auto}
+.sheet.on{display:block}.sheet h3{margin:0 0 4px}
+.row2{display:flex;gap:10px;margin-top:16px}
+.check{display:flex;gap:10px;align-items:center;margin-top:14px;font-size:14px;font-weight:600}.check input{width:20px;height:20px;accent-color:var(--accent)}
+.chip.mem{background:#e7f2ec;color:#2f7a55}
+/* tab bar */
+.tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(480px,100%);background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:10px 0 calc(10px + env(safe-area-inset-bottom));z-index:10}
+.tabbar button{background:none;border:0;font-size:11px;font-weight:700;color:#a39d95;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;min-width:64px}
+.tabbar button span{font-size:20px}.tabbar .on{color:var(--accent)}
+.toast{position:fixed;top:calc(16px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:#1c1b1a;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;z-index:40;display:none}
+#login{padding:calc(60px + env(safe-area-inset-top)) 24px}
+.logo{width:72px;height:72px;border-radius:20px;background:linear-gradient(160deg,#f2a089,#e8664a);display:flex;align-items:center;justify-content:center;font-size:34px;margin-bottom:16px}
+.demo{background:#fff8e6;border:1px solid #f5dfa4;color:#7a5a12;border-radius:12px;padding:8px 12px;font-size:12px;margin-bottom:12px}
+</style></head><body>
+<div id="app">
+
+<section id="login" class="view">
+  <div class="logo">🍽️</div><h1>Pol Eats</h1><div class="sub">AI food coach. Invite only: gamitin ang email na in-add ni Pol.</div>
+  <label>EMAIL</label><input class="field" id="lemail" type="email" autocomplete="email">
+  <label>PASSWORD</label><input class="field" id="lpass" type="password" autocomplete="current-password">
+  <div style="height:16px"></div><button class="btn" onclick="signIn()">Sign in</button>
+</section>
+
+<section id="today" class="view">
+  <div id="demoNote"></div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div><h1 id="hello">Hi Pol 👋</h1><div class="sub" id="dateline"></div></div>
+    <div class="daynav" style="margin-top:12px"><button onclick="shiftDay(-1)">‹</button><button onclick="shiftDay(1)">›</button></div>
+  </div>
+  <div class="card ringbox"><div id="ring"></div><div class="ringstats" id="ringstats"></div></div>
+  <div class="macros" id="macros"></div>
+  <div class="sec">Food <button class="link" onclick="openAdd()">+ Add</button></div>
+  <div id="list"></div>
+  <div id="nudge"></div>
+</section>
+
+<section id="coach" class="view">
+  <h1>Coach</h1><div class="sub">Send a photo, or just type what you ate.</div>
+  <div id="chat"></div>
+</section>
+
+<section id="progress" class="view">
+  <h1>Progress</h1><div class="sub" id="prange"></div>
+  <div class="seg" id="pseg"><button data-d="7" class="on">Week</button><button data-d="30">Month</button><button data-d="90">3 Months</button></div>
+  <div class="card"><div class="lbl">DAILY CALORIES</div><div class="big" id="pavg"></div><div id="pchart"></div></div>
+  <div class="stats" id="pstats"></div>
+  <div class="ins" id="pins"><b>✨ Coach insight:</b> <span id="pinsText">Tap to get this week's insight.</span></div>
+</section>
+
+<section id="me" class="view">
+  <h1>Me</h1><div class="sub">Goals and connections</div>
+  <div class="card">
+    <div class="grid2">
+      <div><label>DAILY CALORIES</label><input class="field" id="sk" type="number" inputmode="numeric"></div>
+      <div><label>GOAL WEIGHT (KG)</label><input class="field" id="sw" type="number" inputmode="decimal"></div>
+      <div><label>PROTEIN (G)</label><input class="field" id="sp" type="number" inputmode="numeric"></div>
+      <div><label>FIBER (G)</label><input class="field" id="sf" type="number" inputmode="numeric"></div>
+    </div>
+    <label>PANGALAN</label><input class="field" id="sname">
+    <label>TUNGKOL SAYO</label><textarea class="field" id="sabout" rows="2"></textarea>
+    <label>NOTES FOR THE COACH</label><textarea class="field" id="sn" rows="3" placeholder="Example: ayoko ng ampalaya, gutom ako lagi pag gabi"></textarea>
+    <div style="height:12px"></div><button class="btn" onclick="saveSettings()">Save goals</button>
+  </div>
+  <div class="sec">My Foods <button class="link" onclick="openMemAdd()">+ Add</button></div>
+  <div class="sub" style="margin:-4px 0 8px">Ito ang gagamitin ng Coach imbes na mag estimate. Nadadagdagan tuwing nag edit ka ng entry.</div>
+  <div id="memlist"></div>
+  <div class="sec">Connections</div>
+  <div class="item" style="cursor:default"><div class="thumb" style="background:var(--strava);color:#fff">🏃</div><div class="t"><b>Strava</b><small>Auto log runs and calories burned. Works with Amazfit through Zepp.</small></div><div class="k" style="color:var(--mute);font-size:12px">Soon</div></div>
+  <div class="sec">Account</div>
+  <div class="card"><label style="margin-top:0">NEW PASSWORD</label><input class="field" id="newpw" type="password" autocomplete="new-password" placeholder="Palitan ang temporary password"><div style="height:10px"></div><button class="btn ghost" onclick="changePass()">Change password</button></div>
+  <div style="height:16px"></div><button class="btn ghost" onclick="signOut()">Sign out</button>
+</section>
+</div>
+
+<div class="composer" id="composer">
+  <input type="file" id="photo" accept="image/*" hidden>
+  <button class="ic" onclick="document.getElementById('photo').click()">📷</button>
+  <div id="pv"></div>
+  <input type="text" id="msg" placeholder="Ano kinain mo?" enterkeyhint="send">
+  <button class="ic go" onclick="send()">↑</button>
+</div>
+
+<nav class="tabbar" id="tabbar">
+  <button data-v="today" class="on"><span>◉</span>Today</button>
+  <button data-v="coach"><span>💬</span>Coach</button>
+  <button data-v="progress"><span>📈</span>Progress</button>
+  <button data-v="me"><span>⚙︎</span>Me</button>
+</nav>
+
+<div class="sheetbg" id="sheetbg" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet"></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+// ---- config: fill these after deploy. Empty = demo mode with sample data on this device only.
+const CONFIG={url:'https://lufmszmhflmecvpislwy.supabase.co',anonKey:'sb_publishable_z8a0uQ0ri_txFoxzPvYV2A_4xRG44N-'};
+const DEMO=!CONFIG.url;
+const sb=DEMO?null:supabase.createClient(CONFIG.url,CONFIG.anonKey);
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=n=>Math.round(n).toLocaleString();
+const ICON={breakfast:['🍳','#f7ead2'],lunch:['🍛','#f3dccb'],dinner:['🍲','#f1e0d6'],snack:['🍌','#e7efe0'],coffee:['☕','#f7e3cf'],activity:['🏃','#fc4c02']};
+let settings={display_name:'Pol',about:'',daily_kcal:1900,protein_g:120,fiber_g:30,goal_weight:75,notes:''};
+let day=startOfDay(new Date()),entries=[],pendingPhoto=null;
+
+function startOfDay(d){const x=new Date(d);x.setHours(0,0,0,0);return x}
+function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',2200)}
+
+// ---------- data layer (Supabase or demo) ----------
+const demoKey='poleats_demo';
+function demoDB(){try{return JSON.parse(localStorage.getItem(demoKey))||seedDemo()}catch(e){return seedDemo()}}
+function demoSave(db){try{localStorage.setItem(demoKey,JSON.stringify(db))}catch(e){}}
+function seedDemo(){const db={entries:[],chat:[],settings};const now=new Date();
+  const add=(dOff,h,m,meal,name,kcal,p,c,f,fi,src)=>{const d=startOfDay(now);d.setDate(d.getDate()-dOff);d.setHours(h,m);db.entries.push({id:crypto.randomUUID(),eaten_at:d.toISOString(),meal,name,kcal,protein:p,carbs:c,fat:f,fiber:fi,source:src||'chat'})};
+  for(let i=1;i<7;i++){add(i,8,10,'coffee','Spanish latte (tall)',230,6,34,8,0);add(i,12,30,'lunch','Carinderya ulam + 1 rice',600+((i*37)%120),26,64,22,3);add(i,19,40,'dinner','3 eggs + banana',320,19,28,15,3);if(i%2)add(i,22,30,'snack','Late night snack',260+i*20,5,30,12,1);if(i%3===0)add(i,21,0,'activity','Night run 5.0 km',-410,0,0,0,0,'strava')}
+  add(0,8,10,'coffee','Spanish latte (tall)',230,6,34,8,0);add(0,12,30,'lunch','Pork adobo + 1 cup rice',620,28,62,26,2,'photo');add(0,16,0,'snack','Banana',105,1,27,0,3);add(0,21,0,'activity','Night run 5.0 km',-420,0,0,0,0,'strava');
+  db.memory=[{id:crypto.randomUUID(),name:"Mama's sinigang",serving:'1 bowl',kcal:380,protein:24,carbs:12,fat:24,fiber:3,uses:4},{id:crypto.randomUUID(),name:'Spanish latte (tall)',serving:'1 cup',kcal:230,protein:6,carbs:34,fat:8,fiber:0,uses:9}];
+  db.chat.push({role:'assistant',content:'Hi Pol! Send mo lang picture ng ulam mo o i type mo kung ano kinain mo, ako na bahala mag log. 🙌'});
+  demoSave(db);return db}
+async function loadSettings(){if(DEMO){settings=demoDB().settings;return}const {data}=await sb.from('food_settings').select('*').maybeSingle();if(data)settings=data}
+async function loadEntries(from,to){
+  if(DEMO)return demoDB().entries.filter(e=>{const t=new Date(e.eaten_at);return t>=from&&t<to}).sort((a,b)=>new Date(a.eaten_at)-new Date(b.eaten_at));
+  const {data,error}=await sb.from('food_entries').select('*').gte('eaten_at',from.toISOString()).lt('eaten_at',to.toISOString()).order('eaten_at');if(error)toast(error.message);return data||[]}
+async function addEntry(e){if(DEMO){const db=demoDB();db.entries.push({id:crypto.randomUUID(),...e});demoSave(db);return}const {error}=await sb.from('food_entries').insert(e);if(error)toast(error.message)}
+async function updateEntry(id,e){if(DEMO){const db=demoDB();Object.assign(db.entries.find(x=>x.id===id),e);demoSave(db);return}const {error}=await sb.from('food_entries').update(e).eq('id',id);if(error)toast(error.message)}
+async function deleteEntry(id){if(DEMO){const db=demoDB();db.entries=db.entries.filter(x=>x.id!==id);demoSave(db);return}const {error}=await sb.from('food_entries').delete().eq('id',id);if(error)toast(error.message)}
+async function coach(payload){
+  if(DEMO){await new Promise(r=>setTimeout(r,900));
+    if(payload.mode==='insight')return {reply:'Pinakamataas ang calories mo sa gabi, lalo na sa mga araw na may late night snack. Subukan mong kumain ng gulay kasabay ng 3 eggs para mas busog ka hanggang matulog.'};
+    const msg=payload.message||'';const mem=(demoDB().memory||[]).find(m=>msg.toLowerCase().includes(m.name.toLowerCase().replace(/^mama's /,'')));
+    if(mem){const it={meal:mealNow(),name:mem.name,kcal:mem.kcal,protein:mem.protein,carbs:mem.carbs,fat:mem.fat,fiber:mem.fiber,source:'memory',eaten_at:new Date().toISOString()};await addEntry(it);return {reply:`Na log ko na, ${mem.serving} ${mem.kcal} kcal, galing sa My Foods mo kaya eksakto.`,logged:[it]}}
+    if(/rice|kanin/i.test(msg)&&!/\d|isa|dalawa|half/i.test(msg)&&!payload.image)return {reply:'Ilang cups ng rice? 1 cup, 1.5, o 2 cups? Malaki kasi ang difference sa calories.',logged:[]};
+    const name=payload.image?'Ulam from photo (estimate)':msg.slice(0,40)||'Food';const it={meal:mealNow(),name,kcal:450,protein:20,carbs:45,fat:18,fiber:3,source:payload.image?'photo':'chat',eaten_at:new Date().toISOString()};
+    if(/\?|ano|paano|bakit/i.test(payload.message||'')&&!payload.image)return {reply:'(Demo) Sa totoong app, sasagutin kita base sa data mo. Halimbawa: may natitira ka pang calories para sa hapunan, piliin ang eggs at gulay.',logged:[]};
+    await addEntry(it);return {reply:'(Demo) Na log ko na, mga 450 kcal. Sa totoong app, AI ang mag e estimate base sa picture o sinabi mo.',logged:[it]}}
+  const {data:{session}}=await sb.auth.getSession();
+  const r=await fetch(CONFIG.url+'/functions/v1/food-coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token,apikey:CONFIG.anonKey},body:JSON.stringify(payload)});
+  return r.json()}
+async function loadMem(){if(DEMO)return demoDB().memory||[];const {data}=await sb.from('food_memory').select('*').order('uses',{ascending:false});return data||[]}
+async function saveMem(m){const row={name:m.name,serving:m.serving||'1 serving',kcal:m.kcal,protein:m.protein||0,carbs:m.carbs||0,fat:m.fat||0,fiber:m.fiber||0};
+  if(DEMO){const db=demoDB();db.memory=db.memory||[];const ex=db.memory.find(x=>x.name.toLowerCase()===row.name.toLowerCase());ex?Object.assign(ex,row):db.memory.push({id:crypto.randomUUID(),uses:1,...row});demoSave(db);return}
+  const {data:ex}=await sb.from('food_memory').select('id').ilike('name',row.name).maybeSingle();
+  const {error}=ex?await sb.from('food_memory').update({...row,updated_at:new Date().toISOString()}).eq('id',ex.id):await sb.from('food_memory').insert(row);if(error)toast(error.message)}
+async function delMem(id){if(DEMO){const db=demoDB();db.memory=(db.memory||[]).filter(x=>x.id!==id);demoSave(db)}else{const {error}=await sb.from('food_memory').delete().eq('id',id);if(error)toast(error.message)}renderMem()}
+async function loadChat(){if(DEMO)return demoDB().chat;const {data}=await sb.from('food_chat').select('role,content,meta').order('created_at',{ascending:false}).limit(40);return (data||[]).reverse()}
+function pushDemoChat(m){if(!DEMO)return;const db=demoDB();db.chat.push(m);demoSave(db)}
+
+// ---------- today ----------
+function ringSVG(left,pct){const r=50,c=2*Math.PI*r,o=c*(1-Math.min(1,Math.max(0,pct)));const over=left<0;
+  return `<svg width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="${r}" fill="none" stroke="#f3eee8" stroke-width="12"/><circle cx="60" cy="60" r="${r}" fill="none" stroke="${over?'#c4492f':'var(--accent)'}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${o}" transform="rotate(-90 60 60)"/><text x="60" y="58" text-anchor="middle" font-size="24" font-weight="800" fill="#1c1b1a">${fmt(Math.abs(left))}</text><text x="60" y="76" text-anchor="middle" font-size="11" fill="#8b857d">${over?'kcal over':'kcal left'}</text></svg>`}
+async function renderToday(){
+  const next=new Date(day);next.setDate(next.getDate()+1);
+  entries=await loadEntries(day,next);
+  const food=entries.filter(e=>e.kcal>0),act=entries.filter(e=>e.kcal<0);
+  const eaten=food.reduce((s,e)=>s+e.kcal,0),burned=act.reduce((s,e)=>s-e.kcal,0),goal=settings.daily_kcal,left=goal+burned-eaten;
+  const sum=k=>food.reduce((s,e)=>s+(+e[k]||0),0);
+  const isToday=+day===+startOfDay(new Date());
+  $('#hello').textContent='Hi '+(settings.display_name||'')+' 👋';
+  $('#dateline').textContent=(isToday?'Today · ':'')+day.toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'});
+  $('#ring').innerHTML=ringSVG(left,(eaten)/(goal+burned||1));
+  $('#ringstats').innerHTML=`<div><b>${fmt(eaten)}</b> <span>eaten</span></div><div><b>${fmt(goal)}</b> <span>daily goal</span></div><div><b>${fmt(burned)}</b> <span>burned</span>${act.some(a=>a.source==='strava')?'<span class="tag">STRAVA</span>':''}</div>`;
+  const mac=(n,v,g,col)=>`<div class="mac"><small>${n}</small><b>${fmt(v)}g ${g?`<em>/ ${g}</em>`:''}</b><div class="bar"><i style="width:${g?Math.min(100,v/g*100):Math.min(100,v/3)}%;background:${col}"></i></div></div>`;
+  $('#macros').innerHTML=mac('PROTEIN',sum('protein'),settings.protein_g,'var(--accent)')+mac('CARBS',sum('carbs'),0,'var(--accent2)')+mac('FIBER',sum('fiber'),settings.fiber_g,'var(--green)');
+  $('#list').innerHTML=entries.length?entries.map(e=>{const [ic,bg]=ICON[e.kcal<0?'activity':e.meal]||ICON.snack;const t=new Date(e.eaten_at).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
+    return `<div class="item" onclick="openEdit('${e.id}')"><div class="thumb" style="background:${bg};${e.kcal<0?'color:#fff':''}">${ic}</div><div class="t"><b>${esc(e.name)}</b><small>${t} · ${e.kcal<0?'Activity':cap(e.meal)}${e.source==='photo'?' · from photo':e.source==='strava'?' · Strava':e.source==='memory'?' · ⭐ My Foods':''}</small></div><div class="k ${e.kcal<0?'neg':''}">${e.kcal<0?'−'+fmt(-e.kcal):fmt(e.kcal)}</div></div>`}).join(''):'<div class="empty">Wala pang na log. I tap ang Coach para mag send ng picture o mag type.</div>';
+  const h=new Date().getHours();
+  $('#nudge').innerHTML=isToday&&food.length?`<div class="nudge">💡 ${left>=0?(h<18?`<b>Para sa gabi:</b> may ${fmt(left)} kcal ka pa. Kung gutom ka pag gabi, isabay ang gulay sa hapunan para mas busog ka.`:`<b>Ayos!</b> May ${fmt(left)} kcal ka pa. Kung magme meryenda ka, mas okay ang prutas o itlog.`):`<b>Lampas na ng ${fmt(-left)} kcal.</b> Okay lang yan, bawi bukas. Mas maraming tubig at maaga matulog ngayong gabi.`}</div>`:'';
+}
+const mealNow=()=>{const h=new Date().getHours();return h<11?'breakfast':h<16?'lunch':'dinner'};
+const cap=s=>(s||'').charAt(0).toUpperCase()+(s||'').slice(1);
+function shiftDay(n){const d=new Date(day);d.setDate(d.getDate()+n);if(d>startOfDay(new Date()))return;day=d;renderToday()}
+
+// ---------- add / edit sheet ----------
+function sheet(h){$('#sheet').innerHTML=h;$('#sheet').classList.add('on');$('#sheetbg').classList.add('on')}
+function closeSheet(){$('#sheet').classList.remove('on');$('#sheetbg').classList.remove('on')}
+function formHTML(e){const meals=['breakfast','lunch','dinner','snack','coffee'];return `
+  <label>NAME</label><input class="field" id="fn" value="${esc(e.name||'')}" placeholder="Halimbawa: Sinigang + 1 rice">
+  <div class="grid2"><div><label>CALORIES</label><input class="field" id="fk" type="number" inputmode="numeric" value="${e.kcal??''}"></div>
+  <div><label>MEAL</label><select class="field" id="fm">${meals.map(m=>`<option ${m===e.meal?'selected':''} value="${m}">${cap(m)}</option>`).join('')}</select></div>
+  <div><label>PROTEIN (G)</label><input class="field" id="fp" type="number" inputmode="decimal" value="${e.protein??''}"></div>
+  <div><label>FIBER (G)</label><input class="field" id="ff" type="number" inputmode="decimal" value="${e.fiber??''}"></div></div>`}
+const memCheck=on=>`<label class="check"><input type="checkbox" id="fmem" ${on?'checked':''}> I save sa My Foods para eksakto sa susunod</label>`;
+function readForm(){return {name:$('#fn').value.trim()||'Food',kcal:Math.round(+$('#fk').value||0),meal:$('#fm').value,protein:+$('#fp').value||0,fiber:+$('#ff').value||0}}
+function openAdd(){sheet(`<h3>Add food</h3><div class="sub">Mas mabilis sa Coach: picture lang.</div>${formHTML({meal:mealNow()})}${memCheck(false)}<div class="row2"><button class="btn ghost" onclick="closeSheet()">Cancel</button><button class="btn" onclick="saveAdd()">Add</button></div>`)}
+async function saveAdd(){const e=readForm();if($('#fmem').checked)await saveMem(e);const t=new Date(day);const n=new Date();t.setHours(n.getHours(),n.getMinutes());await addEntry({...e,eaten_at:t.toISOString(),source:'manual'});closeSheet();renderToday()}
+function openEdit(id){const e=entries.find(x=>x.id===id);if(!e)return;if(e.kcal<0){sheet(`<h3>${esc(e.name)}</h3><div class="sub">${fmt(-e.kcal)} kcal burned${e.source==='strava'?' · from Strava':''}</div><div class="row2"><button class="btn ghost" onclick="closeSheet()">Close</button><button class="btn" style="background:#c4492f" onclick="delIt('${id}')">Delete</button></div>`);return}
+  sheet(`<h3>Edit</h3><div class="sub">Itama mo kung sablay ang estimate.</div>${formHTML(e)}${memCheck(true)}<div class="row2"><button class="btn ghost" onclick="delIt('${id}')">Delete</button><button class="btn" onclick="saveEdit('${id}')">Save</button></div>`)}
+async function saveEdit(id){const e=readForm();await updateEntry(id,e);if($('#fmem').checked){await saveMem(e);toast('Saved sa My Foods')}closeSheet();renderToday()}
+async function delIt(id){await deleteEntry(id);closeSheet();renderToday();toast('Deleted')}
+
+// ---------- coach ----------
+async function renderChat(){const msgs=await loadChat();$('#chat').innerHTML=msgs.map(m=>`<div class="msg ${m.role==='user'?'me':'ai'}">${esc(m.content)}</div>`).join('')||'';scrollChat()}
+function scrollChat(){setTimeout(()=>window.scrollTo(0,document.body.scrollHeight),50)}
+$('#photo').onchange=async e=>{const f=e.target.files[0];if(!f)return;pendingPhoto=await shrink(f);$('#pv').innerHTML=`<div class="preview"><img src="data:image/jpeg;base64,${pendingPhoto}"><b onclick="pendingPhoto=null;$('#pv').innerHTML=''">×</b></div>`;e.target.value=''};
+function shrink(file){return new Promise(res=>{const img=new Image();img.onload=()=>{const s=Math.min(1,1024/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=img.width*s;c.height=img.height*s;c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.8).split(',')[1])};img.src=URL.createObjectURL(file)})}
+$('#msg').addEventListener('keydown',e=>{if(e.key==='Enter')send()});
+async function send(){
+  const text=$('#msg').value.trim();if(!text&&!pendingPhoto)return;
+  const photo=pendingPhoto;pendingPhoto=null;$('#pv').innerHTML='';$('#msg').value='';
+  const chat=$('#chat');
+  chat.insertAdjacentHTML('beforeend',(photo?`<img class="msgimg" src="data:image/jpeg;base64,${photo}">`:'')+(text?`<div class="msg me">${esc(text)}</div>`:''));
+  pushDemoChat({role:'user',content:(photo?'[photo] ':'')+text});
+  chat.insertAdjacentHTML('beforeend','<div class="typing" id="typing">Coach is thinking...</div>');scrollChat();
+  let r;try{r=await coach({message:text,image:photo})}catch(e){r={error:String(e)}}
+  $('#typing')?.remove();
+  if(r.error){chat.insertAdjacentHTML('beforeend',`<div class="msg ai">Sorry, may error: ${esc(r.error)}</div>`);return}
+  (r.logged||[]).forEach(it=>chat.insertAdjacentHTML('beforeend',`<div class="logged"><b>${ICON[it.meal]?.[0]||'🍽️'} ${esc(it.name)}</b><div class="row"><span>Calories</span><b>${it.source==='memory'?'':'~'}${fmt(it.kcal)} kcal</b></div><div class="row"><span>Protein</span><b>${fmt(it.protein||0)}g</b></div><span class="chip ${it.source==='memory'?'mem':''}">${it.source==='memory'?'⭐ From My Foods':'✓ Logged'}</span></div>`));
+  if(r.remembered)toast('Saved sa My Foods');
+  chat.insertAdjacentHTML('beforeend',`<div class="msg ai">${esc(r.reply)}</div>`);pushDemoChat({role:'assistant',content:r.reply});scrollChat();
+  if((r.logged||[]).length)renderToday();
+}
+
+// ---------- progress ----------
+let pdays=7;
+document.querySelectorAll('#pseg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#pseg button').forEach(x=>x.classList.toggle('on',x===b));pdays=+b.dataset.d;renderProgress()});
+async function renderProgress(){
+  const end=startOfDay(new Date());end.setDate(end.getDate()+1);const start=new Date(end);start.setDate(start.getDate()-pdays);
+  const rows=await loadEntries(start,end);
+  const days=[];for(let i=0;i<pdays;i++){const d=new Date(start);d.setDate(d.getDate()+i);days.push({d,kcal:0,burn:0,protein:0,logged:false})}
+  rows.forEach(r=>{const i=Math.floor((startOfDay(new Date(r.eaten_at))-start)/864e5);const o=days[i];if(!o)return;if(r.kcal<0)o.burn-=r.kcal;else{o.kcal+=r.kcal;o.protein+=+r.protein||0;o.logged=true}});
+  const logged=days.filter(d=>d.logged),avg=logged.length?logged.reduce((s,d)=>s+d.kcal,0)/logged.length:0;
+  $('#prange').textContent=`${start.toLocaleDateString(undefined,{month:'short',day:'numeric'})} to ${new Date(end-864e5).toLocaleDateString(undefined,{month:'short',day:'numeric'})}`;
+  $('#pavg').innerHTML=`${fmt(avg)} <span>avg / day logged</span>`;
+  const W=320,H=130,max=Math.max(settings.daily_kcal*1.4,...days.map(d=>d.kcal)),x=i=>10+i*(W-20)/Math.max(1,days.length-1),y=v=>H-18-(v/max)*(H-30);
+  const pts=days.map((d,i)=>d.logged?[x(i),y(d.kcal)]:null).filter(Boolean);
+  const path=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  const gy=y(settings.daily_kcal),step=Math.ceil(days.length/7);
+  $('#pchart').innerHTML=`<svg width="100%" viewBox="0 0 ${W} ${H}"><line x1="0" y1="${gy}" x2="${W}" y2="${gy}" stroke="#e8664a" stroke-dasharray="4 4" stroke-width="1.5"/><text x="${W-2}" y="${gy-5}" text-anchor="end" font-size="10" fill="#e8664a">goal ${fmt(settings.daily_kcal)}</text>${pts.length?`<path d="${path} L${pts[pts.length-1][0]},${H-18} L${pts[0][0]},${H-18}Z" fill="#e8664a18"/><path d="${path}" fill="none" stroke="#1c1b1a" stroke-width="2.5" stroke-linejoin="round"/>${pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="#1c1b1a"/>`).join('')}`:''}${days.map((d,i)=>i%step===0?`<text x="${x(i)}" y="${H-3}" text-anchor="middle" font-size="10" fill="#8b857d">${pdays<=7?d.d.toLocaleDateString(undefined,{weekday:'short'}).slice(0,2):d.d.getDate()}</text>`:'').join('')}</svg>`;
+  const onT=logged.filter(d=>d.kcal<=settings.daily_kcal+d.burn).length;
+  const coffee=rows.filter(r=>r.meal==='coffee'),late=new Set(rows.filter(r=>r.kcal>0&&new Date(r.eaten_at).getHours()>=21).map(r=>startOfDay(new Date(r.eaten_at)).getTime())).size;
+  const runs=rows.filter(r=>r.kcal<0);
+  $('#pstats').innerHTML=[['DAYS ON TARGET',`${onT} / ${logged.length}`],['AVG PROTEIN',`${fmt(logged.length?logged.reduce((s,d)=>s+d.protein,0)/logged.length:0)}g`],['COFFEE DRINKS',`${coffee.length} · ${fmt(coffee.reduce((s,r)=>s+r.kcal,0))} kcal`],['LATE NIGHT EATING',`${late} night${late===1?'':'s'}`],['ACTIVITIES',`${runs.length} · ${fmt(-runs.reduce((s,r)=>s+r.kcal,0))} kcal`],['DAYS LOGGED',`${logged.length} / ${pdays}`]].map(([l,v])=>`<div class="card"><div class="lbl">${l}</div><b>${v}</b></div>`).join('');
+}
+$('#pins').onclick=async()=>{$('#pinsText').textContent='Thinking...';const r=await coach({mode:'insight'});$('#pinsText').textContent=r.reply||r.error||''};
+
+function openMemAdd(){sheet(`<h3>Add to My Foods</h3><div class="sub">Halimbawa: Sinigang ni Mama, 1 bowl.</div>${formHTML({meal:'lunch'})}<label>SERVING</label><input class="field" id="fs" placeholder="1 bowl"><div class="row2"><button class="btn ghost" onclick="closeSheet()">Cancel</button><button class="btn" onclick="saveMemAdd()">Save</button></div>`)}
+async function saveMemAdd(){await saveMem({...readForm(),serving:$('#fs').value||'1 serving'});closeSheet();renderMem();toast('Saved')}
+async function renderMem(){const m=await loadMem();$('#memlist').innerHTML=m.length?m.map(x=>`<div class="item" style="cursor:default"><div class="thumb" style="background:#e7f2ec">⭐</div><div class="t"><b>${esc(x.name)}</b><small>${esc(x.serving)} · ${fmt(x.protein)}g protein · used ${x.uses||1}x</small></div><div class="k">${fmt(x.kcal)}</div><button class="ic" style="width:30px;height:30px;font-size:13px" onclick="delMem('${x.id}')">✕</button></div>`).join(''):'<div class="empty">Wala pa. Pag nag edit ka ng entry, ma se save dito.</div>'}
+// ---------- me ----------
+function renderMe(){renderMem();$('#sname').value=settings.display_name||'';$('#sabout').value=settings.about||'';$('#sk').value=settings.daily_kcal;$('#sw').value=settings.goal_weight;$('#sp').value=settings.protein_g;$('#sf').value=settings.fiber_g;$('#sn').value=settings.notes||''}
+async function saveSettings(){settings={...settings,daily_kcal:+$('#sk').value||1900,goal_weight:+$('#sw').value||75,protein_g:+$('#sp').value||120,fiber_g:+$('#sf').value||30,notes:$('#sn').value,display_name:$('#sname').value.trim(),about:$('#sabout').value.trim()};
+  if(DEMO){const db=demoDB();db.settings=settings;demoSave(db)}else{const {error}=await sb.from('food_settings').upsert({daily_kcal:settings.daily_kcal,goal_weight:settings.goal_weight,protein_g:settings.protein_g,fiber_g:settings.fiber_g,notes:settings.notes,display_name:settings.display_name,about:settings.about,updated_at:new Date().toISOString()});if(error)return toast(error.message)}
+  toast('Saved');renderToday()}
+
+// ---------- nav / auth ----------
+function show(v){document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on',s.id===v));document.querySelectorAll('#tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  $('#composer').classList.toggle('on',v==='coach');$('#tabbar').style.display=v==='login'?'none':'flex';
+  if(v==='today')renderToday();if(v==='coach')renderChat();if(v==='progress')renderProgress();if(v==='me')renderMe();window.scrollTo(0,0)}
+document.querySelectorAll('#tabbar button').forEach(b=>b.onclick=()=>show(b.dataset.v));
+async function signIn(){const {error}=await sb.auth.signInWithPassword({email:$('#lemail').value.trim(),password:$('#lpass').value});if(error)return toast(/invalid/i.test(error.message)?'Mali ang email o password':error.message);start()}
+async function changePass(){const pw=$('#newpw').value;if(pw.length<8)return toast('At least 8 characters');if(DEMO)return toast('Demo lang');const {error}=await sb.auth.updateUser({password:pw});if(error)return toast(error.message);$('#newpw').value='';toast('Password changed')}
+async function signOut(){if(DEMO){try{localStorage.removeItem(demoKey)}catch(e){}location.reload();return}await sb.auth.signOut();show('login')}
+function onboard(){sheet(`<h3>Welcome sa Pol Eats 👋</h3><div class="sub">Konting info lang para kilala ka ng coach.</div>
+  <label>PANGALAN</label><input class="field" id="on" placeholder="Anong tawag sayo?">
+  <div class="grid2"><div><label>DAILY CALORIES</label><input class="field" id="ok" type="number" inputmode="numeric" value="1900"></div><div><label>GOAL WEIGHT (KG)</label><input class="field" id="ow" type="number" inputmode="decimal"></div></div>
+  <label>TUNGKOL SAYO</label><textarea class="field" id="oa" rows="3" placeholder="Halimbawa: office worker, nag gy gym 3x a week, mahilig sa milk tea, laging late kumain ng dinner"></textarea>
+  <div class="sub" style="margin-top:8px">Hindi alam sa calories? Iwan mo lang sa 1900, pwede mo palitan sa Me.</div>
+  <div class="row2"><button class="btn" onclick="saveOnboard()">Start</button></div>`);$('#sheetbg').onclick=null}
+async function saveOnboard(){const name=$('#on').value.trim();if(!name)return toast('Lagay mo pangalan mo');
+  settings={...settings,display_name:name,daily_kcal:+$('#ok').value||1900,goal_weight:+$('#ow').value||null,about:$('#oa').value.trim()};
+  if(DEMO){const db=demoDB();db.settings=settings;demoSave(db)}else{const {error}=await sb.from('food_settings').upsert({display_name:settings.display_name,daily_kcal:settings.daily_kcal,goal_weight:settings.goal_weight,about:settings.about,updated_at:new Date().toISOString()});if(error)return toast(error.message)}
+  $('#sheetbg').onclick=closeSheet;closeSheet();renderToday()}
+async function start(){await loadSettings();if(DEMO)$('#demoNote').innerHTML='<div class="demo">Demo mode: sample data lang ito, hindi pa naka connect.</div>';show('today');if(!settings.display_name)onboard()}
+(async()=>{if(DEMO)return start();const {data:{session}}=await sb.auth.getSession();session?start():show('login')})();
+if('serviceWorker' in navigator&&!DEMO)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script></body></html>
