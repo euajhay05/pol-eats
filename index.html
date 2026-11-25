@@ -70,6 +70,7 @@ label{display:block;font-size:12px;font-weight:700;color:var(--mute);margin:12px
 .row2{display:flex;gap:10px;margin-top:16px}
 .check{display:flex;gap:10px;align-items:center;margin-top:14px;font-size:14px;font-weight:600}.check input{width:20px;height:20px;accent-color:var(--accent)}
 .chip.mem{background:#e7f2ec;color:#2f7a55}
+.basis{font-size:11px;margin-top:6px;color:#2f7a55}.basis.est{color:#a0671a}
 /* tab bar */
 .tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(480px,100%);background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:10px 0 calc(10px + env(safe-area-inset-bottom));z-index:10}
 .tabbar button{background:none;border:0;font-size:11px;font-weight:700;color:#a39d95;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;min-width:64px}
@@ -266,7 +267,7 @@ function readForm(){return {name:$('#fn').value.trim()||'Food',kcal:Math.round(+
 function openAdd(){sheet(`<h3>Add food</h3><div class="sub">Mas mabilis sa Coach: picture lang.</div>${formHTML({meal:mealNow()})}${memCheck(false)}<div class="row2"><button class="btn ghost" onclick="closeSheet()">Cancel</button><button class="btn" onclick="saveAdd()">Add</button></div>`)}
 async function saveAdd(){const e=readForm();if($('#fmem').checked)await saveMem(e);const t=new Date(day);const n=new Date();t.setHours(n.getHours(),n.getMinutes());await addEntry({...e,eaten_at:t.toISOString(),source:'manual'});closeSheet();renderToday()}
 function openEdit(id){const e=entries.find(x=>x.id===id);if(!e)return;if(e.kcal<0){sheet(`<h3>${esc(e.name)}</h3><div class="sub">${fmt(-e.kcal)} kcal burned${e.source==='strava'?' · from Strava':''}</div><div class="row2"><button class="btn ghost" onclick="closeSheet()">Close</button><button class="btn" style="background:#c4492f" onclick="delIt('${id}')">Delete</button></div>`);return}
-  sheet(`<h3>Edit</h3><div class="sub">Itama mo kung sablay ang estimate.</div>${formHTML(e)}${memCheck(true)}<div class="row2"><button class="btn ghost" onclick="delIt('${id}')">Delete</button><button class="btn" onclick="saveEdit('${id}')">Save</button></div>`)}
+  sheet(`<h3>Edit</h3><div class="sub">Itama mo kung sablay ang estimate.</div>${e.basis?`<div class="basis ${/estimate/i.test(e.basis)?'est':''}">${/estimate/i.test(e.basis)?'⚠️':'✅'} Basis: ${esc(e.basis)}</div>`:''}${formHTML(e)}${memCheck(true)}<div class="row2"><button class="btn ghost" onclick="delIt('${id}')">Delete</button><button class="btn" onclick="saveEdit('${id}')">Save</button></div>`)}
 async function saveEdit(id){const e=readForm();await updateEntry(id,e);if($('#fmem').checked){await saveMem(e);toast('Saved sa My Foods')}closeSheet();renderToday()}
 async function delIt(id){await deleteEntry(id);closeSheet();renderToday();toast('Deleted')}
 
@@ -289,7 +290,7 @@ async function send(){
   let r;try{r=await coach({message:text,image:photo})}catch(e){r={error:String(e)}}
   $('#typing')?.remove();sending=false;$('#composer').classList.remove('busy');
   if(r.error){chat.insertAdjacentHTML('beforeend',`<div class="msg ai">Sorry, may error: ${esc(r.error)}</div>`);return}
-  (r.logged||[]).forEach(it=>chat.insertAdjacentHTML('beforeend',`<div class="logged"><b>${ICON[it.meal]?.[0]||'🍽️'} ${esc(it.name)}</b><div class="row"><span>Calories</span><b>${it.source==='memory'?'':'~'}${fmt(it.kcal)} kcal</b></div><div class="row"><span>Protein</span><b>${fmt(it.protein||0)}g</b></div><span class="chip ${it.source==='memory'?'mem':''}">${it.source==='memory'?'⭐ From My Foods':'✓ Logged'}</span></div>`));
+  (r.logged||[]).forEach(it=>chat.insertAdjacentHTML('beforeend',`<div class="logged"><b>${ICON[it.meal]?.[0]||'🍽️'} ${esc(it.name)}</b><div class="row"><span>Calories</span><b>${it.source==='memory'?'':'~'}${fmt(it.kcal)} kcal</b></div><div class="row"><span>Protein</span><b>${fmt(it.protein||0)}g</b></div>${it.basis?`<div class="basis ${/estimate/i.test(it.basis)?'est':''}">${/estimate/i.test(it.basis)?'⚠️':'✅'} ${esc(it.basis)}</div>`:''}<span class="chip ${it.source==='memory'?'mem':''}">${it.source==='memory'?'⭐ From My Foods':'✓ Logged'}</span></div>`));
   if(r.remembered)toast('Saved sa My Foods');
   chat.insertAdjacentHTML('beforeend',`<div class="msg ai">${esc(r.reply)}</div>`);pushDemoChat({role:'assistant',content:r.reply});scrollChat();
   if((r.logged||[]).length)renderToday();
