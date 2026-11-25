@@ -46,7 +46,9 @@ h1{font-size:28px;margin:4px 0 2px;letter-spacing:-.5px}.sub{color:var(--mute);f
 .typing{color:var(--mute);font-size:13px;padding:4px 2px}
 .composer{position:fixed;left:50%;transform:translateX(-50%);width:min(452px,calc(100% - 28px));bottom:calc(92px + env(safe-area-inset-bottom));background:var(--card);border-radius:26px;padding:8px;display:none;gap:8px;align-items:center;box-shadow:0 4px 20px #0000001f}
 .composer.on{display:flex}
-.composer input[type=text]{flex:1;border:0;outline:0;background:none;padding:8px 4px;font-size:16px}
+.composer textarea{flex:1;border:0;outline:0;background:none;padding:8px 4px;font-size:16px;resize:none;max-height:120px;line-height:1.35;font-family:inherit}
+.composer.busy .go{opacity:.4;pointer-events:none}
+.composer{align-items:flex-end}
 .ic{width:38px;height:38px;border-radius:50%;background:#f3eee8;border:0;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;flex:none}
 .ic.go{background:var(--accent);color:#fff}
 .preview{position:relative}.preview img{width:38px;height:38px;border-radius:10px;object-fit:cover;display:block}.preview b{position:absolute;top:-6px;right:-6px;background:#000;color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer}
@@ -130,7 +132,7 @@ label{display:block;font-size:12px;font-weight:700;color:var(--mute);margin:12px
   <div class="sub" style="margin:-4px 0 8px">Ito ang gagamitin ng Coach imbes na mag estimate. Nadadagdagan tuwing nag edit ka ng entry.</div>
   <div id="memlist"></div>
   <div class="sec">Connections</div>
-  <div class="item" style="cursor:default"><div class="thumb" style="background:var(--strava);color:#fff">🏃</div><div class="t"><b>Strava</b><small>Auto log runs and calories burned. Works with Amazfit through Zepp.</small></div><div class="k" style="color:var(--mute);font-size:12px">Soon</div></div>
+  <div class="item" style="cursor:default"><div class="thumb" style="background:var(--strava);color:#fff">🏃</div><div class="t"><b>Strava</b><small id="stravaInfo">Auto log runs and calories burned. Works with Amazfit through Zepp.</small></div><button class="btn" id="stravaBtn" style="width:auto;padding:9px 14px;background:var(--strava);font-size:13px" onclick="stravaToggle()">Connect</button></div>
   <div class="sec">Account</div>
   <div class="card"><label style="margin-top:0">NEW PASSWORD</label><input class="field" id="newpw" type="password" autocomplete="new-password" placeholder="Palitan ang temporary password"><div style="height:10px"></div><button class="btn ghost" onclick="changePass()">Change password</button></div>
   <div style="height:16px"></div><button class="btn ghost" onclick="signOut()">Sign out</button>
@@ -141,7 +143,7 @@ label{display:block;font-size:12px;font-weight:700;color:var(--mute);margin:12px
   <input type="file" id="photo" accept="image/*" hidden>
   <button class="ic" onclick="document.getElementById('photo').click()">📷</button>
   <div id="pv"></div>
-  <input type="text" id="msg" placeholder="Ano kinain mo?" enterkeyhint="send">
+  <textarea id="msg" rows="1" placeholder="Ano kinain mo? (pwede isang message lahat)"></textarea>
   <button class="ic go" onclick="send()">↑</button>
 </div>
 
@@ -161,6 +163,7 @@ label{display:block;font-size:12px;font-weight:700;color:var(--mute);margin:12px
 // ---- config: fill these after deploy. Empty = demo mode with sample data on this device only.
 const CONFIG={url:'https://lufmszmhflmecvpislwy.supabase.co',anonKey:'sb_publishable_z8a0uQ0ri_txFoxzPvYV2A_4xRG44N-'};
 const DEMO=!CONFIG.url;
+const STRAVA_CLIENT_ID='';
 const sb=DEMO?null:supabase.createClient(CONFIG.url,CONFIG.anonKey);
 
 const $=s=>document.querySelector(s);
@@ -209,7 +212,19 @@ async function saveMem(m){const row={name:m.name,serving:m.serving||'1 serving',
   const {data:ex}=await sb.from('food_memory').select('id').ilike('name',row.name).maybeSingle();
   const {error}=ex?await sb.from('food_memory').update({...row,updated_at:new Date().toISOString()}).eq('id',ex.id):await sb.from('food_memory').insert(row);if(error)toast(error.message)}
 async function delMem(id){if(DEMO){const db=demoDB();db.memory=(db.memory||[]).filter(x=>x.id!==id);demoSave(db)}else{const {error}=await sb.from('food_memory').delete().eq('id',id);if(error)toast(error.message)}renderMem()}
-async function loadChat(){if(DEMO)return demoDB().chat;const {data}=await sb.from('food_chat').select('role,content,meta').order('created_at',{ascending:false}).limit(40);return (data||[]).reverse()}
+async function callFn(name,payload){const {data:{session}}=await sb.auth.getSession();const r=await fetch(CONFIG.url+'/functions/v1/'+name,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token,apikey:CONFIG.anonKey},body:JSON.stringify(payload)});return r.json()}
+let strava={connected:false};
+async function stravaStatus(){if(DEMO)return;const {data}=await sb.rpc('food_strava_status');strava=data||{connected:false};const b=$('#stravaBtn'),i=$('#stravaInfo');if(!b)return;
+  if(strava.connected){b.textContent='Disconnect';b.style.background='#8b857d';i.textContent=`Connected${strava.name?' as '+strava.name:''}. Last sync ${strava.last_sync?new Date(strava.last_sync).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'never'}.`}
+  else{b.textContent='Connect';b.style.background='var(--strava)';i.textContent='Auto log runs and calories burned. Works with Amazfit through Zepp.'}}
+async function stravaToggle(){if(DEMO)return toast('Demo lang');if(!STRAVA_CLIENT_ID)return toast('Strava setup pa lang, soon!');
+  if(strava.connected){await callFn('strava',{action:'disconnect'});toast('Strava disconnected');return stravaStatus()}
+  const redirect=location.origin+location.pathname;location.href=`https://www.strava.com/oauth/mobile/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(redirect)}&approval_prompt=auto&scope=activity:read_all`}
+async function stravaSync(){if(DEMO)return;try{const p=new URLSearchParams(location.search);
+  if(p.get('code')&&p.get('scope')){history.replaceState(null,'',location.pathname);if(!/activity:read/.test(p.get('scope')))return toast('Kailangan i-allow ang activities');const r=await callFn('strava',{action:'connect',code:p.get('code')});if(r.error)return toast(r.error);toast(`Strava connected${r.added?', '+r.added+' activities added':''}`);renderToday();return}
+  if(p.get('error')){history.replaceState(null,'',location.pathname);return toast('Strava not connected')}
+  await stravaStatus();if(strava.connected){const r=await callFn('strava',{action:'sync'});if(r.added){toast(`${r.added} new from Strava`);renderToday()}}}catch(e){}}
+async function loadChat(){if(DEMO)return demoDB().chat;const {data}=await sb.from('food_chat').select('role,content,meta').order('id',{ascending:false}).limit(40);return (data||[]).reverse()}
 function pushDemoChat(m){if(!DEMO)return;const db=demoDB();db.chat.push(m);demoSave(db)}
 
 // ---------- today ----------
@@ -260,16 +275,19 @@ async function renderChat(){const msgs=await loadChat();$('#chat').innerHTML=msg
 function scrollChat(){setTimeout(()=>window.scrollTo(0,document.body.scrollHeight),50)}
 $('#photo').onchange=async e=>{const f=e.target.files[0];if(!f)return;pendingPhoto=await shrink(f);$('#pv').innerHTML=`<div class="preview"><img src="data:image/jpeg;base64,${pendingPhoto}"><b onclick="pendingPhoto=null;$('#pv').innerHTML=''">×</b></div>`;e.target.value=''};
 function shrink(file){return new Promise(res=>{const img=new Image();img.onload=()=>{const s=Math.min(1,1024/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=img.width*s;c.height=img.height*s;c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.8).split(',')[1])};img.src=URL.createObjectURL(file)})}
-$('#msg').addEventListener('keydown',e=>{if(e.key==='Enter')send()});
+const isTouch=matchMedia('(pointer:coarse)').matches;
+$('#msg').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!isTouch){e.preventDefault();send()}});
+$('#msg').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(120,e.target.scrollHeight)+'px'});
+let sending=false;
 async function send(){
-  const text=$('#msg').value.trim();if(!text&&!pendingPhoto)return;
+  if(sending)return;const text=$('#msg').value.trim();if(!text&&!pendingPhoto)return;sending=true;$('#composer').classList.add('busy');$('#msg').style.height='auto';
   const photo=pendingPhoto;pendingPhoto=null;$('#pv').innerHTML='';$('#msg').value='';
   const chat=$('#chat');
   chat.insertAdjacentHTML('beforeend',(photo?`<img class="msgimg" src="data:image/jpeg;base64,${photo}">`:'')+(text?`<div class="msg me">${esc(text)}</div>`:''));
   pushDemoChat({role:'user',content:(photo?'[photo] ':'')+text});
   chat.insertAdjacentHTML('beforeend','<div class="typing" id="typing">Coach is thinking...</div>');scrollChat();
   let r;try{r=await coach({message:text,image:photo})}catch(e){r={error:String(e)}}
-  $('#typing')?.remove();
+  $('#typing')?.remove();sending=false;$('#composer').classList.remove('busy');
   if(r.error){chat.insertAdjacentHTML('beforeend',`<div class="msg ai">Sorry, may error: ${esc(r.error)}</div>`);return}
   (r.logged||[]).forEach(it=>chat.insertAdjacentHTML('beforeend',`<div class="logged"><b>${ICON[it.meal]?.[0]||'🍽️'} ${esc(it.name)}</b><div class="row"><span>Calories</span><b>${it.source==='memory'?'':'~'}${fmt(it.kcal)} kcal</b></div><div class="row"><span>Protein</span><b>${fmt(it.protein||0)}g</b></div><span class="chip ${it.source==='memory'?'mem':''}">${it.source==='memory'?'⭐ From My Foods':'✓ Logged'}</span></div>`));
   if(r.remembered)toast('Saved sa My Foods');
@@ -304,7 +322,7 @@ function openMemAdd(){sheet(`<h3>Add to My Foods</h3><div class="sub">Halimbawa:
 async function saveMemAdd(){await saveMem({...readForm(),serving:$('#fs').value||'1 serving'});closeSheet();renderMem();toast('Saved')}
 async function renderMem(){const m=await loadMem();$('#memlist').innerHTML=m.length?m.map(x=>`<div class="item" style="cursor:default"><div class="thumb" style="background:#e7f2ec">⭐</div><div class="t"><b>${esc(x.name)}</b><small>${esc(x.serving)} · ${fmt(x.protein)}g protein · used ${x.uses||1}x</small></div><div class="k">${fmt(x.kcal)}</div><button class="ic" style="width:30px;height:30px;font-size:13px" onclick="delMem('${x.id}')">✕</button></div>`).join(''):'<div class="empty">Wala pa. Pag nag edit ka ng entry, ma se save dito.</div>'}
 // ---------- me ----------
-function renderMe(){renderMem();$('#sname').value=settings.display_name||'';$('#sabout').value=settings.about||'';$('#sk').value=settings.daily_kcal;$('#sw').value=settings.goal_weight;$('#sp').value=settings.protein_g;$('#sf').value=settings.fiber_g;$('#sn').value=settings.notes||''}
+function renderMe(){renderMem();stravaStatus();$('#sname').value=settings.display_name||'';$('#sabout').value=settings.about||'';$('#sk').value=settings.daily_kcal;$('#sw').value=settings.goal_weight;$('#sp').value=settings.protein_g;$('#sf').value=settings.fiber_g;$('#sn').value=settings.notes||''}
 async function saveSettings(){settings={...settings,daily_kcal:+$('#sk').value||1900,goal_weight:+$('#sw').value||75,protein_g:+$('#sp').value||120,fiber_g:+$('#sf').value||30,notes:$('#sn').value,display_name:$('#sname').value.trim(),about:$('#sabout').value.trim()};
   if(DEMO){const db=demoDB();db.settings=settings;demoSave(db)}else{const {error}=await sb.from('food_settings').upsert({daily_kcal:settings.daily_kcal,goal_weight:settings.goal_weight,protein_g:settings.protein_g,fiber_g:settings.fiber_g,notes:settings.notes,display_name:settings.display_name,about:settings.about,updated_at:new Date().toISOString()});if(error)return toast(error.message)}
   toast('Saved');renderToday()}
@@ -327,7 +345,7 @@ async function saveOnboard(){const name=$('#on').value.trim();if(!name)return to
   settings={...settings,display_name:name,daily_kcal:+$('#ok').value||1900,goal_weight:+$('#ow').value||null,about:$('#oa').value.trim()};
   if(DEMO){const db=demoDB();db.settings=settings;demoSave(db)}else{const {error}=await sb.from('food_settings').upsert({display_name:settings.display_name,daily_kcal:settings.daily_kcal,goal_weight:settings.goal_weight,about:settings.about,updated_at:new Date().toISOString()});if(error)return toast(error.message)}
   $('#sheetbg').onclick=closeSheet;closeSheet();renderToday()}
-async function start(){await loadSettings();if(DEMO)$('#demoNote').innerHTML='<div class="demo">Demo mode: sample data lang ito, hindi pa naka connect.</div>';show('today');if(!settings.display_name)onboard()}
+async function start(){await loadSettings();if(DEMO)$('#demoNote').innerHTML='<div class="demo">Demo mode: sample data lang ito, hindi pa naka connect.</div>';show('today');if(!settings.display_name)onboard();stravaSync()}
 (async()=>{if(DEMO)return start();const {data:{session}}=await sb.auth.getSession();session?start():show('login')})();
 if('serviceWorker' in navigator&&!DEMO)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script></body></html>
